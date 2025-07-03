@@ -52,6 +52,13 @@ while (true)
         if(currentPawn == localPlayer.pawnAddress)
             continue;
 
+        //IntPtr currentWeapon = swed.ReadPointer(currentPawn, Offsets.m_pClippingWeapon);
+
+        //short weaponDefinitionIndex = swed.ReadShort(currentWeapon, Offsets.m_AttributeManager + Offsets.m_Item + Offsets.m_iItemDefinitionIndex);
+
+        //if(weaponDefinitionIndex == -1)
+            //continue;
+
         IntPtr sceneNode = swed.ReadPointer(currentPawn, Offsets.m_pGameSceneNode);
         IntPtr boneMatrix = swed.ReadPointer(sceneNode, Offsets.m_modelState + 0x80);
 
@@ -63,27 +70,35 @@ while (true)
         if(lifeState != 256)
             continue;
 
+        uint health = swed.ReadUInt(currentPawn, Offsets.m_iHealth);
+        if (health > 100 || health < 0)
+            continue;
+
         Entity entity = new Entity();
 
         entity.pawnAddress = currentPawn;
+        //entity.currentWeaponIndex = weaponDefinitionIndex;
+        //entity.currentWeaponName = Enum.GetName(typeof(Weapon), weaponDefinitionIndex) ?? "Unknown Weapon";
         entity.controllerAddress = currentController;
         entity.team = team;
+        entity.health = health;
         entity.lifeState = lifeState;
-        entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin);
+        entity.origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin); // position
         entity.distance = Vector3.Distance(entity.origin, localPlayer.origin);
         entity.bones = reader.ReadBones(boneMatrix);
         entity.bones2d = reader.ReadBones2d(entity.bones, viewMatrix, screen);
 
         entities.Add(entity);
 
-        Console.ForegroundColor = ConsoleColor.Green;
+        //Console.ForegroundColor = ConsoleColor.Green;
 
-        if(team != localPlayer.team)
-        {
-            Console.ForegroundColor= ConsoleColor.Red;
-        }
+        //if(team != localPlayer.team)
+        //{
+        //Console.ForegroundColor= ConsoleColor.Red;
+        //}
 
-        Console.ResetColor();
+        //Console.ResetColor();
+
     }
     renderer.entitiesCopy = entities;
     renderer.localPlayerCopy = localPlayer;
