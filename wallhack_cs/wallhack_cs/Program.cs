@@ -8,7 +8,6 @@ IntPtr client = swed.GetModuleBase("client.dll");
 
 Reader reader = new Reader(swed);
 
-
 Renderer renderer = new Renderer();
 renderer.Start().Wait();
 
@@ -19,10 +18,12 @@ Vector2 screen = new Vector2(1920, 1080);
 
 renderer.overlaySize = screen;
 
+object renderLock = new object();
+
 while (true)
 {
     entities.Clear();
-    Console.Clear();
+    // Console.Clear(); // Remova ou comente esta linha
 
     IntPtr entityList = swed.ReadPointer(client, Offsets.dwEntityList);
     IntPtr listEntry = swed.ReadPointer(entityList, 0x10);
@@ -100,8 +101,11 @@ while (true)
         //Console.ResetColor();
 
     }
-    renderer.entitiesCopy = entities;
-    renderer.localPlayerCopy = localPlayer;
+    lock (renderLock)
+    {
+        renderer.entitiesCopy = entities.ToList();
+        renderer.localPlayerCopy = localPlayer;
+    }
     
-    Thread.Sleep(3);
+    Thread.Sleep(2);
 }

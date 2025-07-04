@@ -24,23 +24,22 @@ namespace wallhack_cs
         Vector4 teamColor = new Vector4(1f, 0.2431f, 0.1882f, 1.0f);
         Vector4 enemyColor = new Vector4(1f, 1f, 1f, 1f);
         Vector4 textColor = new Vector4(1f, 1f, 1f, 1f);
+        object renderLock = new object();
 
         protected override void Render()
-        {   
+        {
+            // Menu
             ImGui.Begin("ESP Menu");
             ImGui.Checkbox("ESP", ref esp);
             ImGui.Checkbox("On teammate", ref teammate);
             ImGui.Checkbox("Draw Skeleton", ref drawSkeleton);
             ImGui.Checkbox("Draw Boxes", ref drawBoxes);
             ImGui.Checkbox("Health Bar", ref healthBar);
-            //ImGui.Checkbox("Weapon names", ref weapon);
             ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 500);
             if (teammate)
             {
                 if (ImGui.CollapsingHeader("Team Lines Color"))
-                {
                     ImGui.ColorPicker4("##teamcolor", ref teamColor);
-                }
             }
             if (ImGui.CollapsingHeader("Enemy Lines Color"))
                 ImGui.ColorPicker4("##enemycolor", ref enemyColor);
@@ -49,14 +48,28 @@ namespace wallhack_cs
                 if (ImGui.CollapsingHeader("Health text color"))
                     ImGui.ColorPicker4("##textcolor", ref textColor);
             }
+            ImGui.End(); // Fecha o ESP Menu
 
-            ImGui.End();
-
+            // Overlay
             if (esp)
             {
-                DrawOverlay();
-                DrawSkeletons();
-                ImGui.End();
+                ImGui.SetNextWindowSize(overlaySize);
+                ImGui.SetNextWindowPos(windowLocation);
+                ImGui.Begin("Overlay", ImGuiWindowFlags.NoDecoration |
+                          ImGuiWindowFlags.NoBackground |
+                          ImGuiWindowFlags.NoBringToFrontOnFocus |
+                          ImGuiWindowFlags.NoMove |
+                          ImGuiWindowFlags.NoInputs |
+                          ImGuiWindowFlags.NoCollapse |
+                          ImGuiWindowFlags.NoScrollbar |
+                          ImGuiWindowFlags.NoScrollWithMouse);
+
+                lock (renderLock)
+                {
+                    DrawSkeletons();
+                }
+
+                ImGui.End(); // Fecha a janela "Overlay"
             }
         }
 
@@ -174,21 +187,6 @@ namespace wallhack_cs
                     }
                 }
             }
-        }
-
-
-        void DrawOverlay()
-        {
-            ImGui.SetNextWindowSize(overlaySize);
-            ImGui.SetNextWindowPos(windowLocation);
-            ImGui.Begin("Overlay", ImGuiWindowFlags.NoDecoration |
-                      ImGuiWindowFlags.NoBackground |
-                      ImGuiWindowFlags.NoBringToFrontOnFocus |
-                      ImGuiWindowFlags.NoMove |
-                      ImGuiWindowFlags.NoInputs |
-                      ImGuiWindowFlags.NoCollapse |
-                      ImGuiWindowFlags.NoScrollbar |
-                      ImGuiWindowFlags.NoScrollWithMouse);
         }
     }
 }

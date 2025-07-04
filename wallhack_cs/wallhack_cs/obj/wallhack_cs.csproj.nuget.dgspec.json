@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\teamb\\Desktop\\game_cheats\\menu\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj": {}
+    "C:\\Users\\teamb\\Desktop\\cheat\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj": {}
   },
   "projects": {
-    "C:\\Users\\teamb\\Desktop\\game_cheats\\menu\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj": {
+    "C:\\Users\\teamb\\Desktop\\cheat\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\teamb\\Desktop\\game_cheats\\menu\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj",
+        "projectUniqueName": "C:\\Users\\teamb\\Desktop\\cheat\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj",
         "projectName": "wallhack_cs",
-        "projectPath": "C:\\Users\\teamb\\Desktop\\game_cheats\\menu\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj",
+        "projectPath": "C:\\Users\\teamb\\Desktop\\cheat\\wallhack_cs\\wallhack_cs\\wallhack_cs.csproj",
         "packagesPath": "C:\\Users\\teamb\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\teamb\\Desktop\\game_cheats\\menu\\wallhack_cs\\wallhack_cs\\obj\\",
+        "outputPath": "C:\\Users\\teamb\\Desktop\\cheat\\wallhack_cs\\wallhack_cs\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
