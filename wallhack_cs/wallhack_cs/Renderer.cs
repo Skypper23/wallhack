@@ -1,191 +1,218 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using ClickableTransparentOverlay;
+﻿using ClickableTransparentOverlay;
 using ImGuiNET;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace wallhack_cs
 {
     public class Renderer : Overlay
     {
-        public Vector2 overlaySize = new Vector2(1920, 1080); // Tamanho da tela
-        Vector2 windowLocation = new Vector2(0, 0);
+        public Vector2 overlaySize = new Vector2(1920, 1080);
         public List<Entity> entitiesCopy = new List<Entity>();
         public Entity localPlayerCopy = new Entity();
-        //ImDrawListPtr drawListPtr;
+
+        // Configurações
         public bool esp = true;
         public bool drawBoxes = true;
-        public bool drawSkeleton = false;
+        public bool drawSkeleton = true;
         public bool healthBar = true;
         public bool teammate = false;
-        //public bool weapon = true;
-        float boneThickness = 4;
-        Vector4 teamColor = new Vector4(1f, 0.2431f, 0.1882f, 1.0f);
-        Vector4 enemyColor = new Vector4(1f, 1f, 1f, 1f);
-        Vector4 textColor = new Vector4(1f, 1f, 1f, 1f);
-        object renderLock = new object();
+        public bool antiflash = true;
+        public bool trigger = false;
+        public bool enableVisibility = true;
+
+        // Estilos
+        public float boneThickness = 4;
+        public Vector4 teamColor = new Vector4(1f, 0.2431f, 0.1882f, 1.0f);
+        public Vector4 enemyColor = new Vector4(1f, 1f, 1f, 1f);
+        public Vector4 textColor = new Vector4(1f, 1f, 1f, 1f);
+        public Vector4 skeletonColor = new Vector4(0.4941f, 0f, 1f, 1f);
+        public Vector4 visibleColor = new Vector4(0.0117f, 0.8588f, 1.0f, 1.0f);
 
         protected override void Render()
         {
-            // Menu
-            ImGui.Begin("ESP Menu");
-            ImGui.Checkbox("ESP", ref esp);
+            RenderMenu();
+            if (esp) RenderOverlay();
+        }
+
+        private void RenderMenu()
+        {
+            ImGui.Begin("Nebula Guard");
+            ImGui.Text("ESP");
+            ImGui.Checkbox("Wallhack", ref esp);
             ImGui.Checkbox("On teammate", ref teammate);
             ImGui.Checkbox("Draw Skeleton", ref drawSkeleton);
             ImGui.Checkbox("Draw Boxes", ref drawBoxes);
+            ImGui.Checkbox("Visibility", ref enableVisibility);
             ImGui.Checkbox("Health Bar", ref healthBar);
-            ImGui.SliderFloat("Bone Thickness", ref boneThickness, 4, 500);
-            if (teammate)
-            {
-                if (ImGui.CollapsingHeader("Team Lines Color"))
-                    ImGui.ColorPicker4("##teamcolor", ref teamColor);
-            }
+
+            ImGui.Text("Utils");
+            ImGui.Checkbox("AntiFlash", ref antiflash);
+            ImGui.Checkbox("TriggerBot", ref trigger);
+
+            ImGui.SliderFloat("Line Thickness", ref boneThickness, 4, 500);
+
+            if (teammate && ImGui.CollapsingHeader("Team Lines Color"))
+                ImGui.ColorPicker4("##teamcolor", ref teamColor);
+
             if (ImGui.CollapsingHeader("Enemy Lines Color"))
                 ImGui.ColorPicker4("##enemycolor", ref enemyColor);
-            if (healthBar)
-            {
-                if (ImGui.CollapsingHeader("Health text color"))
-                    ImGui.ColorPicker4("##textcolor", ref textColor);
-            }
-            ImGui.End(); // Fecha o ESP Menu
 
-            // Overlay
-            if (esp)
-            {
-                ImGui.SetNextWindowSize(overlaySize);
-                ImGui.SetNextWindowPos(windowLocation);
-                ImGui.Begin("Overlay", ImGuiWindowFlags.NoDecoration |
-                          ImGuiWindowFlags.NoBackground |
-                          ImGuiWindowFlags.NoBringToFrontOnFocus |
-                          ImGuiWindowFlags.NoMove |
-                          ImGuiWindowFlags.NoInputs |
-                          ImGuiWindowFlags.NoCollapse |
-                          ImGuiWindowFlags.NoScrollbar |
-                          ImGuiWindowFlags.NoScrollWithMouse);
+            if (healthBar && ImGui.CollapsingHeader("Health text color"))
+                ImGui.ColorPicker4("##textcolor", ref textColor);
 
-                lock (renderLock)
-                {
-                    DrawSkeletons();
-                }
+            if (drawSkeleton && ImGui.CollapsingHeader("Skeleton line color"))
+                ImGui.ColorPicker4("##textcolor", ref skeletonColor);
 
-                ImGui.End(); // Fecha a janela "Overlay"
-            }
+            if (enableVisibility && ImGui.CollapsingHeader("Visibility Color"))
+                ImGui.ColorPicker4("##textcolor", ref visibleColor);
+
+            ImGui.End();
         }
 
-        void DrawSkeletons()
+        private void RenderOverlay()
         {
-            if (entitiesCopy == null || entitiesCopy.Count == 0)
-                return;
+            ImGui.SetNextWindowSize(overlaySize);
+            ImGui.SetNextWindowPos(Vector2.Zero);
 
-            // Criar uma cópia do array para evitar modificação da lista original durante a iteração
-            Entity[] tempEntities = entitiesCopy.ToArray();
+            ImGui.Begin("Overlay",
+                ImGuiWindowFlags.NoDecoration |
+                ImGuiWindowFlags.NoBackground |
+                ImGuiWindowFlags.NoBringToFrontOnFocus |
+                ImGuiWindowFlags.NoMove |
+                ImGuiWindowFlags.NoInputs |
+                ImGuiWindowFlags.NoCollapse |
+                ImGuiWindowFlags.NoScrollbar |
+                ImGuiWindowFlags.NoScrollWithMouse);
 
-            var drawListPtr = ImGui.GetWindowDrawList();
-            uint uintColor;
-
-            foreach (Entity entity in tempEntities)
+            if (entitiesCopy.Count > 0)
             {
-                if (entity == null)
-                    continue;
-
-                float minX = float.MaxValue, minY = float.MaxValue;
-                float maxX = float.MinValue, maxY = float.MinValue;
-
-                foreach (var bone in entity.bones2d)
+                var drawList = ImGui.GetWindowDrawList();
+                foreach (var entity in entitiesCopy)
                 {
-                    minX = MathF.Min(minX, bone.X);
-                    minY = MathF.Min(minY, bone.Y);
-                    maxX = MathF.Max(maxX, bone.X);
-                    maxY = MathF.Max(maxY, bone.Y);
+                    if (entity == null) continue;
+                    DrawEntity(drawList, entity);
                 }
+            }
 
-                Vector2 topLeft = new Vector2(minX - 7, minY - 12);
-                Vector2 bottomRight = new Vector2(maxX, maxY);
+            ImGui.End();
+        }
 
-                uintColor = localPlayerCopy.team == entity.team
-                            ? ImGui.ColorConvertFloat4ToU32(teamColor)
-                            : ImGui.ColorConvertFloat4ToU32(enemyColor);
+        private void DrawEntity(ImDrawListPtr drawList, Entity entity)
+        {
+            if (entity.bones2d == null || entity.bones2d.Count < 13) return;
 
-                if (entity.bones2d[2].X > 0 && entity.bones2d[2].Y > 0 &&
-                    entity.bones2d[2].X < overlaySize.X && entity.bones2d[2].Y < overlaySize.Y)
-                {
-                    float currentBoneThickness = boneThickness;
-                    if (entity.distance >= 0)
-                        currentBoneThickness = boneThickness;
-                    if (entity.distance >= 1)
-                        currentBoneThickness = boneThickness / entity.distance;
+            // Calcular bounding box
+            Vector2 min = new Vector2(float.MaxValue), max = new Vector2(float.MinValue);
+            foreach (var bone in entity.bones2d)
+            {
+                min = Vector2.Min(min, bone);
+                max = Vector2.Max(max, bone);
+            }
 
-                    if ((drawSkeleton && entity.team != localPlayerCopy.team) || (drawSkeleton && teammate))
-                    {
-                        drawListPtr.AddLine(entity.bones2d[1], entity.bones2d[2], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[1], entity.bones2d[3], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[1], entity.bones2d[6], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[3], entity.bones2d[4], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[6], entity.bones2d[7], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[4], entity.bones2d[5], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[7], entity.bones2d[8], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[1], entity.bones2d[0], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[0], entity.bones2d[9], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[0], entity.bones2d[11], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[9], entity.bones2d[10], uintColor, currentBoneThickness);
-                        drawListPtr.AddLine(entity.bones2d[11], entity.bones2d[12], uintColor, currentBoneThickness);
-                        drawListPtr.AddCircle(entity.bones2d[2], 3 + currentBoneThickness, uintColor);
-                    }
+            Vector2 topLeft = new Vector2(min.X - 7, min.Y - 12);
+            Vector2 bottomRight = max;
 
-                    if ((drawBoxes && entity.team != localPlayerCopy.team) || (drawBoxes && teammate))
-                    {
-                        drawListPtr.AddRect(topLeft, bottomRight, uintColor, 0f, ImDrawFlags.None, currentBoneThickness);
-                    }
+            // Determinar cor
+            uint color = GetEntityColor(entity);
 
-                    if ((healthBar && entity.team != localPlayerCopy.team) || (healthBar && teammate))
-                    {
-                        float healthPercent = Math.Clamp(entity.health, 0, 100) / 100f;
-                        float barThickness = currentBoneThickness + 2.4f;
-                        float barHeight = bottomRight.Y - topLeft.Y;
-                        float barTopY = topLeft.Y;
-                        float barBottomY = bottomRight.Y;
-                        float barX = topLeft.X - 6f;
+            // Desenhar elementos
+            float thickness = CalculateThickness(entity.distance);
 
-                        Vector4 healthColor = new Vector4(1.0f - healthPercent, healthPercent, 0f, 1f);
-                        uint healthColorU32 = ImGui.ColorConvertFloat4ToU32(healthColor);
-                        uint black = ImGui.ColorConvertFloat4ToU32(new Vector4(0, 0, 0, 1f));
+            if (drawSkeleton && ShouldDraw(entity))
+                DrawSkeleton(drawList, entity, thickness);
 
-                        drawListPtr.AddRectFilled(
-                            new Vector2(barX, barTopY),
-                            new Vector2(barX + barThickness, barBottomY),
-                            black
-                        );
+            if (drawBoxes && ShouldDraw(entity))
+                drawList.AddRect(topLeft, bottomRight, color, 0f, ImDrawFlags.None, thickness);
 
-                        float filledTopY = barBottomY - (barHeight * healthPercent);
+            if (healthBar && ShouldDraw(entity))
+                DrawHealthBar(drawList, entity, topLeft, bottomRight, thickness);
+        }
 
-                        drawListPtr.AddRectFilled(
-                            new Vector2(barX, filledTopY),
-                            new Vector2(barX + barThickness, barBottomY),
-                            healthColorU32
-                        );
+        private uint GetEntityColor(Entity entity)
+        {
+            if (localPlayerCopy.team == entity.team)
+                return ImGui.ColorConvertFloat4ToU32(teamColor);
 
-                        if (entity.health < 100 && entity.health > 0)
-                        {
-                            string healthText = $"{entity.health}";
+            if (enableVisibility)
+                return ImGui.ColorConvertFloat4ToU32(entity.spotted ? visibleColor : enemyColor);
 
-                            float fontScale = Math.Clamp(barHeight / 60f, 0.4f, 1.0f);
+            return ImGui.ColorConvertFloat4ToU32(enemyColor);
+        }
 
-                            Vector2 textSize = ImGui.CalcTextSize(healthText) * fontScale;
+        private float CalculateThickness(float distance)
+        {
+            return distance <= 0 ? boneThickness :
+                   distance <= 1 ? boneThickness :
+                   boneThickness / distance;
+        }
 
-                            Vector2 textPos = new Vector2(
-                                barX + (barThickness / 2f) - (textSize.X / 2f),
-                                barTopY - textSize.Y - 2f
-                            );
+        private bool ShouldDraw(Entity entity)
+        {
+            return entity.team != localPlayerCopy.team || teammate;
+        }
 
-                            drawListPtr.AddText(
-                                textPos,
-                                ImGui.ColorConvertFloat4ToU32(textColor),
-                                healthText
-                            );
-                        }
-                    }
-                }
+        private void DrawSkeleton(ImDrawListPtr drawList, Entity entity, float thickness)
+        {
+            uint color = ImGui.ColorConvertFloat4ToU32(skeletonColor);
+            var bones = entity.bones2d;
+
+            // Cabeça e pescoço
+            drawList.AddLine(bones[1], bones[2], color, thickness);
+
+            // Torso e braços
+            drawList.AddLine(bones[1], bones[3], color, thickness);
+            drawList.AddLine(bones[1], bones[6], color, thickness);
+            drawList.AddLine(bones[3], bones[4], color, thickness);
+            drawList.AddLine(bones[6], bones[7], color, thickness);
+
+            // Mãos
+            drawList.AddLine(bones[4], bones[5], color, thickness);
+            drawList.AddLine(bones[7], bones[8], color, thickness);
+
+            // Pernas
+            drawList.AddLine(bones[1], bones[0], color, thickness);
+            drawList.AddLine(bones[0], bones[9], color, thickness);
+            drawList.AddLine(bones[0], bones[11], color, thickness);
+            drawList.AddLine(bones[9], bones[10], color, thickness);
+            drawList.AddLine(bones[11], bones[12], color, thickness);
+
+            // Cabeça
+            drawList.AddCircle(bones[2], 3 + thickness, color);
+        }
+
+        private void DrawHealthBar(ImDrawListPtr drawList, Entity entity, Vector2 topLeft, Vector2 bottomRight, float thickness)
+        {
+            float healthPercent = Math.Clamp(entity.health, 0, 100) / 100f;
+            float barHeight = bottomRight.Y - topLeft.Y;
+            float barX = topLeft.X - 6f;
+            float barThickness = thickness + 2.4f;
+
+            // Fundo
+            drawList.AddRectFilled(
+                new Vector2(barX, topLeft.Y),
+                new Vector2(barX + barThickness, bottomRight.Y),
+                ImGui.ColorConvertFloat4ToU32(new Vector4(0, 0, 0, 1f))
+            );
+
+            // Barra de vida
+            float filledTopY = bottomRight.Y - (barHeight * healthPercent);
+            drawList.AddRectFilled(
+                new Vector2(barX, filledTopY),
+                new Vector2(barX + barThickness, bottomRight.Y),
+                ImGui.ColorConvertFloat4ToU32(new Vector4(1.0f - healthPercent, healthPercent, 0f, 1f))
+            );
+
+            // Texto de vida
+            if (entity.health < 100 && entity.health > 0)
+            {
+                string healthText = entity.health.ToString();
+                float fontScale = Math.Clamp(barHeight / 60f, 0.4f, 1.0f);
+                Vector2 textSize = ImGui.CalcTextSize(healthText) * fontScale;
+                Vector2 textPos = new Vector2(barX + (barThickness / 2f) - (textSize.X / 2f), topLeft.Y - textSize.Y - 2f);
+
+                drawList.AddText(textPos, ImGui.ColorConvertFloat4ToU32(textColor), healthText);
             }
         }
     }

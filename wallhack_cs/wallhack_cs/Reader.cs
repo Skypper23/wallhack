@@ -17,7 +17,7 @@ namespace wallhack_cs
         {
             byte[] boneBytes = swed.ReadBytes(boneAddress, 27 * 32 + 16);
             List<Vector3> bones = new List<Vector3>();
-            foreach(var boneId in Enum.GetValues(typeof(BonesIds)))
+            foreach (var boneId in Enum.GetValues(typeof(BonesIds)))
             {
                 float x = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 0);
                 float y = BitConverter.ToSingle(boneBytes, (int)boneId * 32 + 4);
