@@ -1,5 +1,7 @@
-﻿using Swed64;
+﻿using ImGuiNET;
+using Swed64;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using wallhack_cs;
 
 Swed swed = new Swed("cs2");
@@ -13,6 +15,7 @@ Entity localPlayer = new Entity();
 Vector2 screen = new Vector2(1920, 1080);
 renderer.overlaySize = screen;
 object renderLock = new object();
+
 
 while (true)
 {
@@ -46,6 +49,7 @@ while (true)
         ViewMatrix viewMatrix = reader.readMatrix(client + Offsets.dwViewMatrix);
 
         int team = swed.ReadInt(currentPawn, Offsets.m_iTeamNum);
+        int entIndex = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iIDEntIndex);
         uint lifeState = swed.ReadUInt(currentPawn, Offsets.m_lifeState);
         if (lifeState != 256) continue;
 
@@ -85,6 +89,43 @@ while (true)
             swed.WriteFloat(localPlayer.pawnAddress, flashOffset, 0f);
         }
     }
+    if (renderer.trigger)
+    {
+        IntPtr entityList2 = swed.ReadPointer(client, Offsets.dwEntityList);
+        IntPtr localPlayerPawn2 = swed.ReadPointer(client, Offsets.dwLocalPlayerPawn);
 
-    Thread.Sleep(2);
+        int team = swed.ReadInt(localPlayerPawn2, Offsets.m_iTeamNum);
+        int entIndex = swed.ReadInt(localPlayerPawn2, Offsets.m_iIDEntIndex);
+
+        if (entIndex != -1)
+        {
+            IntPtr listEntry2 = swed.ReadPointer(entityList2, 0x8 * ((entIndex & 0x7FFF) >> 9) + 0x10);
+
+            IntPtr currentPawn2 = swed.ReadPointer(listEntry2, 0x78 * (entIndex & 0x1FF));
+
+            int entityTeam = swed.ReadInt(currentPawn2, Offsets.m_iTeamNum);
+
+
+            if (team != entityTeam && renderer.imKey != ImGuiKey.None)
+            {
+                if(((GetAsyncKeyState(renderer.CaptureKey) & 0x8000) != 0))
+                {
+                    swed.WriteInt(client, Offsets.attack, 65537);
+                    Thread.Sleep(10); // Pequena pausa para evitar múltiplos ataques
+                    swed.WriteInt(client, Offsets.attack, 256);
+                }
+            }
+            else if (team != entityTeam && renderer.imKey == ImGuiKey.None)
+            {
+                swed.WriteInt(client, Offsets.attack, 65537);
+                Thread.Sleep(10); // Pequena pausa para evitar múltiplos ataques
+                swed.WriteInt(client, Offsets.attack, 256);
+            }
+        }
+
+        Thread.Sleep(2);
+    }
 }
+
+[DllImport("user32.dll")]
+static extern short GetAsyncKeyState(int vKey);

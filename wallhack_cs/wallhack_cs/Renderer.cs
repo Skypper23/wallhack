@@ -1,13 +1,18 @@
 ﻿using ClickableTransparentOverlay;
+using ClickableTransparentOverlay.Win32;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace wallhack_cs
 {
     public class Renderer : Overlay
     {
+        [DllImport("user32.dll")]
+        static extern short GetAsyncKeyState(int vKey);
+
         public Vector2 overlaySize = new Vector2(1920, 1080);
         public List<Entity> entitiesCopy = new List<Entity>();
         public Entity localPlayerCopy = new Entity();
@@ -29,6 +34,12 @@ namespace wallhack_cs
         public Vector4 textColor = new Vector4(1f, 1f, 1f, 1f);
         public Vector4 skeletonColor = new Vector4(0.4941f, 0f, 1f, 1f);
         public Vector4 visibleColor = new Vector4(0.0117f, 0.8588f, 1.0f, 1.0f);
+
+        public string KeyPressed = "";
+        bool isButtonPressed = false;
+        bool CapturInput = false;
+        public int CaptureKey = -1;
+        public ImGuiKey imKey = ImGuiKey.None;
 
         protected override void Render()
         {
@@ -67,6 +78,53 @@ namespace wallhack_cs
 
             if (enableVisibility && ImGui.CollapsingHeader("Visibility Color"))
                 ImGui.ColorPicker4("##textcolor", ref visibleColor);
+
+            if (trigger)
+            {
+                ImGui.Text("Trigger HotKey:");
+
+                if (ImGui.Button("Press any key"))
+                {
+                    isButtonPressed = true;
+                    CapturInput = true;
+                    CaptureKey = -1;
+                }
+
+                if (isButtonPressed)
+                {
+                    if (CapturInput)
+                    {
+                        ImGui.Text("Press any key...");
+                    }
+                    else
+                    {
+                        if (CaptureKey != -1)
+                        {
+                            ImGui.Text("Hotkey Input: " + ImGui.GetKeyName(imKey));
+                        }
+                        else
+                        {
+                            ImGui.Text("Hotkey Input: None");
+                        }
+                    }
+                }
+
+                if (isButtonPressed && CapturInput)
+                {
+                    // Verifica todas as teclas possíveis (0 a 255 são códigos VK padrão)
+                    for (int vk = 0; vk < 256; vk++)
+                    {
+                        if ((GetAsyncKeyState(vk) & 0x8000) != 0) // Tecla pressionada
+                        {
+                            CaptureKey = vk; // Armazena o código VK
+                            CapturInput = false;
+                            KeyPressed = GlobalKey.GlobalKeyDetector.VKCodeToName(vk); // Converte para nome legível
+                            imKey = GlobalKey.GlobalKeyDetector.VKCodeToImGuiKey(vk);
+                            break;
+                        }
+                    }
+                }
+            }
 
             ImGui.End();
         }

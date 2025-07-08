@@ -2,10 +2,10 @@
 {
     public static class Offsets
     {
-        public const int dwEntityList = 0x1A044C0;
+        public const int dwEntityList = 0x1A044E0;
         public const int dwLocalPlayerPawn = 0x18580D0;
-        public const int dwViewMatrix = 0x1A6D260;
-        public const int dwPlantedC4 = 0x1A71C30;
+        public const int dwViewMatrix = 0x1A6D280;
+        public const int dwPlantedC4 = 0x1A71C40;
         public const int m_hPlayerPawn = 0x824;
         public const int m_vOldOrigin = 0x1324;
         public const int m_vecOrigin = 0x568;
@@ -20,5 +20,7 @@
         public const int m_Item = 0x50;
         public const int m_entitySpottedState = 0x23D0;
         public const int m_bSpotted = 0x8;
+        public const int m_iIDEntIndex = 0x1458;
+        public const int attack = 0x18508E0;
     }
 }
