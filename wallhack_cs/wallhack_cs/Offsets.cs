@@ -22,5 +22,6 @@
         public const int m_bSpotted = 0x8;
         public const int m_iIDEntIndex = 0x1458;
         public const int attack = 0x18508E0;
+        public const int m_iszPlayerName = 0x660;
     }
 }

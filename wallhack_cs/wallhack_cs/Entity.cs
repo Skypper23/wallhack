@@ -9,6 +9,7 @@ namespace wallhack_cs
         public IntPtr controllerAddress;
         public Vector3 origin;
         public int team;
+        public string name;
         public uint health;
         public uint lifeState;
         public float distance;

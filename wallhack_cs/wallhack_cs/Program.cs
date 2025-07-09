@@ -49,6 +49,7 @@ while (true)
         ViewMatrix viewMatrix = reader.readMatrix(client + Offsets.dwViewMatrix);
 
         int team = swed.ReadInt(currentPawn, Offsets.m_iTeamNum);
+        string name = swed.ReadString(currentController, Offsets.m_iszPlayerName, 16);
         int entIndex = swed.ReadInt(localPlayer.pawnAddress, Offsets.m_iIDEntIndex);
         uint lifeState = swed.ReadUInt(currentPawn, Offsets.m_lifeState);
         if (lifeState != 256) continue;
@@ -64,7 +65,8 @@ while (true)
             spotted = swed.ReadBool(currentPawn, Offsets.m_entitySpottedState + Offsets.m_bSpotted),
             health = health,
             lifeState = lifeState,
-            origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin)
+            origin = swed.ReadVec(currentPawn, Offsets.m_vOldOrigin),
+            name = name
         };
 
         entity.distance = Vector3.Distance(entity.origin, localPlayer.origin);
